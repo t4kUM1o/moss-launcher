@@ -1,0 +1,6 @@
+<!-- Moss original four-tile mark, 2026-10-02. SPDX-License-Identifier: GPL-3.0-only -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="8" fill="#121b19"/>
+  <path fill="#88dfad" d="M8 8h21v21H8zM35 35h21v21H35z"/>
+  <path fill="#4c936c" d="M35 8h21v21H35zM8 35h21v21H8z"/>
+</svg>

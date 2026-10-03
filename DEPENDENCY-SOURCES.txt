@@ -1,0 +1,39 @@
+Moss fork dependency notice, added 2026-10-02
+
+Qt 6.11.1 is dynamically linked. Copyright The Qt Company Ltd and contributors.
+Qt is used under its open-source GPL/LGPL terms; no user rights to replace,
+relink or reverse engineer the library for debugging modifications are restricted.
+See COPYING.md, licenses/qtbase, and the other Qt module license directories.
+Qt modules used: qtbase, qtsvg, qtnetworkauth, qtimageformats.
+The modules' sources (including their bundled third-party components/notices)
+are in DependencySources.zip, qt-6.11.1/.
+Source origin: https://download.qt.io/archive/qt/6.11/6.11.1/single/
+Build/replacement instructions are in the Qt source README and configure scripts.
+After rebuilding with MSVC x64, corresponding DLLs/plugins can replace the
+matching DLLs/plugins next to mossprism.exe. There is no signature/relink lock.
+
+Prism's libnbtplusplus source is included in Source.zip:
+https://github.com/PrismLauncher/libnbtplusplus
+Commit: 3538933614059f0f44388a2b16f3db25ce42285b
+
+Vcpkg registry baseline:
+2d6a6cf3ac9a7cc93942c3d289a2f9c661a6f4a7
+https://github.com/microsoft/vcpkg
+The actual patched sources used for the following dependencies are included
+in DependencySources.zip under vcpkg-sources/:
+bzip2 1.0.8, cmark 0.31.1, extra-cmake-modules 6.7.0,
+libarchive 3.8.2, xz/liblzma 5.8.1, libqrencode 4.1.1,
+lz4 1.10.0, lzo 2.10, pkgconf 2.5.1, tomlplusplus 3.4.0,
+zlib 1.3.1, zstd 1.5.7.
+Package notices are supplied under licenses/. Build definitions and exact
+baseline are in Source.zip (vcpkg.json, vcpkg-configuration.json, cmake/).
+
+Unmodified Microsoft Visual C++ x64 release runtime DLLs (14.51.36231) are
+supplied beside the EXE, under separate Microsoft terms, not in these
+open-source source archives. See MSVC-RUNTIME-NOTICE.txt. No system runtime
+installer is run and no system DLLs are changed.
+
+Build-only Temurin JDK 17, vcpkg and build tools are not bundled with the
+runtime. The game Java downloader remains upstream's normal implementation.
+Do not redistribute this package without its licenses and corresponding
+Source.zip / DependencySources.zip, or another license-compliant source offer.

@@ -1,0 +1,24 @@
+Microsoft Visual C++ runtime / Windows x64
+
+Copyright Microsoft Corporation. All rights reserved.
+These binary files are unmodified Microsoft redistributables, NOT GPL code.
+They are supplied separately beside the launcher for application-local use.
+They have their own Microsoft license terms; the launcher's GPL does not
+relicense them. No debug_nonredist files or Microsoft compiler tools are bundled.
+
+Origin: Visual Studio Community 2026
+VC/Redist/MSVC/14.51.36231/x64/Microsoft.VC145.CRT
+
+Microsoft's redistribution list and license terms:
+https://learn.microsoft.com/en-us/visualstudio/releases/2026/redistribution
+https://visualstudio.microsoft.com/license-terms/vs2026-ga-community/
+https://visualstudio.microsoft.com/license-terms/vs2026-ga-visualcpp-v14-redist-runtime/
+
+Keep these files unmodified and preserve Microsoft notices. Redistributors
+must hold the rights required by those Microsoft terms. Update the application
+local runtime from Microsoft when security fixes are released. Central runtime
+installation, if desired, must be performed by the user; this package does not
+change system DLLs or install system-wide components.
+
+Local deployment documentation:
+https://learn.microsoft.com/en-us/cpp/windows/choosing-a-deployment-method

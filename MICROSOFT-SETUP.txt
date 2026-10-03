@@ -1,0 +1,34 @@
+Moss Microsoft account setup / 2026-10-03 / AUTH PREVIEW
+
+Public Application (client) ID: 191f8f9d-bc7c-4f13-8989-ad109a11bf9a
+This ID identifies the developer's app, not a player's account. It is not a secret.
+Forks must register their own app rather than reuse the Moss or Prism IDs.
+
+Azure設定（アプリを管理する開発者が一度だけ行う）
+1. Entra ID → アプリの登録 → Moss Launcher → 認証。
+2. 「プラットフォームの追加」→「モバイル アプリケーションとデスクトップ アプリケーション」。
+3. カスタム リダイレクトURIに http://localhost/oauth/microsoft を追加して保存。
+   Web/SPAとして登録しない。ポート番号は指定しない。
+   個人用Microsoftアカウントに対応させる。クライアントシークレットは作成・配布しない。
+4. Minecraft APIのアプリ利用承認も別途申請する。登録だけで承認済みにはならない。
+   案内: https://minecraft-launcher-lib.readthedocs.io/en/stable/tutorial/microsoft_login.html
+   公式窓口へのリンク先と必要情報を本人が確認して申請する。承認時期は保証しない。
+
+Mossは標準ブラウザのMicrosoftページで本人がログインする方式です。
+PKCE S256とOAuth stateを利用し、応答はこのPCのループバックのみで受け取ります。
+認証用のAzureサーバー/仮想マシン/ストレージは作成しません。
+Microsoftの応答を受け取った後にXbox/Minecraft認証とゲーム所有確認を続けます。
+ブラウザの応答画面が出ても、Minecraft認証の完了を意味しません。
+
+設定→サービスのMicrosoftクライアントID欄は通常空欄でよい（組み込みMoss IDを使用）。
+別のIDが入力されていればそちらが優先されます。変更時は再ログインが必要です。
+派生版を配布する開発者は正規に登録・承認した自分のIDをビルド時に指定してください。
+
+注意: この版は認証準備版。実アカウントのログイン・ゲーム起動は未検証。
+Minecraft APIの承認状況を自動で確認したわけではありません。
+アカウント保存はPrism由来のJSON形式のままで、Windows資格情報保護はまだ未実装。
+ログイン後のUserDataには認証情報が含まれるため、公開・再配布・共有しないでください。
+クライアントシークレット、確認コード、ログイン後のURL、トークンをチャットに送らないでください。
+
+Microsoft redirect documentation:
+https://learn.microsoft.com/en-us/entra/identity-platform/reply-url
