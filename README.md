@@ -1,112 +1,112 @@
 # Moss Launcher
 
-An independent desktop launcher for **Minecraft: Java Edition**, based on
-[Prism Launcher 11.1.1](https://github.com/PrismLauncher/PrismLauncher/tree/11.1.1).
-Moss aims to make managing game instances, mods and shaders easier.
+[Prism Launcher 11.1.1](https://github.com/PrismLauncher/PrismLauncher/tree/11.1.1)を基にした、
+**Minecraft: Java Edition向けの独立したデスクトップランチャー**です。
+起動構成の管理や、MOD・シェーダーの導入をわかりやすくすることを目指しています。
 
-Moss is not an official Minecraft or Prism Launcher product, and is not endorsed
-by or affiliated with Mojang, Microsoft or the Prism Launcher project.
+MossはMinecraftやPrism Launcherの公式製品ではありません。
+Mojang、Microsoft、Prism Launcherプロジェクトによる承認・提携もありません。
 
-**Development preview — not a finished public release.** Minecraft API approval,
-successful real-account sign-in and a complete Minecraft launch have not been
-verified. Registering an Azure app alone does not grant Minecraft API access.
-No ready-to-use public binary release is promised by this repository.
+**現在は開発中の試験版であり、一般向けの完成版ではありません。**
+Minecraft APIの利用承認、実際のアカウントでのログイン、Minecraftの起動完了は
+まだ確認できていません。Azureでアプリを登録するだけではMinecraft APIを利用できません。
+このリポジトリの公開は、すぐに遊べる実行ファイルの一般配布を意味しません。
 
-## Current implementation
+## 現在の実装
 
-- Prism-based instance management and per-instance settings.
-- Inherited Fabric/Forge loader installation and version management.
-- Inherited Modrinth mod search, installation and update tools, plus modpack,
-  resource-pack and shader management.
-- Java discovery and manual selection, including `JAVA_HOME` and Windows `PATH`.
-  A newer Java version is not guaranteed compatible with every game or mod loader.
-- Separate Moss branding and portable Windows data storage, without overwriting
-  existing Prism Launcher data.
-- Microsoft browser sign-in using authorization code flow, PKCE S256 and OAuth
-  state, with a loopback-only callback. This authentication integration still
-  needs service approval and end-to-end verification.
+- Prismを基にした起動構成（インスタンス）の管理と、構成ごとの設定。
+- Prism由来のFabric・Forgeの導入とバージョン管理。
+- Prism由来のModrinthでのMOD検索・導入・更新と、
+  MODパック・リソースパック・シェーダーの管理。
+- Javaの自動検出と手動選択。`JAVA_HOME`やWindowsの`PATH`も検出対象です。
+  ただし、新しいJavaがすべてのMinecraft・MODローダーで動くとは限りません。
+- Moss独自の名称・マークと、Windows向けのポータブル保存先。
+  既存のPrism Launcherのデータを上書きしません。
+- Microsoftのページをブラウザで開くログイン処理。
+  認可コード方式、PKCE S256、OAuthのstateを使用し、
+  応答は同じPC内だけで受け取ります。利用承認と一連の動作検証はまだ必要です。
 
-CurseForge integration is inherited, but no CurseForge API key is bundled.
-Its availability requires authorized provider credentials and applicable
-permissions. Prism's provider credentials are not reused.
+CurseForgeとの連携処理はPrismから引き継いでいますが、APIキーは同梱していません。
+利用には正規の認証情報と必要な許可が必要です。
+Prismのサービス用認証情報は流用していません。
 
-## Planned, not yet implemented
+## 今後追加したい機能（未実装）
 
-- A guided way to copy an existing instance and migrate it to Fabric or Forge,
-  preserving the original instance and saves.
-- Compatible convenience-mod recommendations and dependency guidance.
-- A simplified shader setup flow with required rendering-mod guidance.
-- Windows-protected credential storage and a further authentication/logging
-  security review before a public binary release.
+- 既存の起動構成をコピーし、元の構成やセーブデータを残したまま
+  Fabric・Forgeへ移行するための案内画面。
+- MinecraftのバージョンやMODローダーに合う便利系MODのおすすめ表示と、
+  前提MODの導入案内。
+- 必要な描画MODの案内を含めた、わかりやすいシェーダー導入手順。
+- Windowsの保護機能を利用した認証情報の保存と、
+  一般向け実行ファイルの公開前に行う認証処理・ログの安全性確認。
 
-These are development goals, not features claimed to work in this preview.
-Forge and Fabric mods are not generally interchangeable.
+これらは今後の開発目標であり、現在の試験版で動作する機能として紹介しているものではありません。
+Forge用とFabric用のMODは、基本的にそのまま交換して使うことはできません。
 
-## Microsoft authentication and local data
+## Microsoft認証と保存データ
 
-Users sign in on Microsoft's page in their own browser; Moss does not ask users
-to enter their Microsoft password into the launcher. Minecraft API access is
-needed for authentication, game-entitlement checks and profile retrieval before
-launching. Game ownership and provider restrictions are not bypassed.
+ログインは利用者自身のブラウザに表示されるMicrosoftのページで行います。
+Mossの画面にMicrosoftアカウントのパスワードを入力させる方式ではありません。
+Minecraft APIは、起動前の認証、ゲームの所有確認、プロフィールの取得に使用します。
+ゲームの所有確認やサービスの利用制限を回避する処理は行いません。
 
-The registered desktop redirect URI is `http://localhost/oauth/microsoft`.
-The receiver listens on loopback with a temporary local port; it is not a hosted
-authentication server. A browser callback does not by itself prove that Minecraft
-authentication or ownership verification has completed.
+デスクトップアプリとして登録する戻り先（リダイレクトURI）は
+`http://localhost/oauth/microsoft`です。
+応答の受け取りには、このPC内だけで通信するループバック接続と一時的なポートを使用します。
+外部に認証サーバーを設置する仕組みではありません。
+ブラウザに応答画面が表示されても、Minecraftの認証や所有確認が完了したとは限りません。
 
-The Microsoft application client ID identifies the app and is public, not a
-client secret. No Microsoft client secret is bundled. Developers distributing
-their own fork must register and obtain permission for their own application.
-See [MICROSOFT-SETUP.txt](MICROSOFT-SETUP.txt).
+MicrosoftのクライアントIDはアプリを識別する公開情報であり、秘密の認証情報ではありません。
+クライアントシークレットは同梱していません。
+別の派生版を配布する開発者は、自分のアプリを登録し、必要な利用許可を取得してください。
+設定方法は[Microsoft認証の設定手順](MICROSOFT-SETUP.txt)を参照してください。
 
-**Security limitation:** account persistence still uses Prism's JSON storage;
-Windows OS-protected token storage is not implemented yet. The portable
-`UserData` directory can contain accounts, authentication tokens, instances,
-worlds, mods and settings. Never upload it or include it in a shared package.
-Do not publish passwords, access/refresh tokens, private provider API keys or
-login callback URLs. This overview is not a substitute for a reviewed release
-privacy policy.
+**現在の安全性に関する制限：**
+アカウント情報の保存はPrism由来のJSON形式のままで、
+Windowsの保護機能を利用したトークン保存はまだ実装していません。
+ポータブル版の`UserData`には、アカウント情報・認証トークン・起動構成・
+ワールド・MOD・設定が含まれることがあります。
+このフォルダを公開したり、他人に渡す配布物へ含めたりしないでください。
 
-## Source and building
+パスワード、アクセストークン、更新用トークン、秘密のAPIキー、
+ログイン後の戻り先URLも公開しないでください。
+この説明は、正式な配布に向けて確認されたプライバシーポリシーの代わりではありません。
 
-The upstream baseline is commit
-`7d2d3c1ec6fcf8255ebacd02d9f792688575dfb4` (Prism Launcher 11.1.1).
-See [MOSS-CHANGES.md](MOSS-CHANGES.md) for modifications,
-[BUILD-MOSS.md](BUILD-MOSS.md) for Windows build instructions and
-[VERIFICATION.txt](VERIFICATION.txt) for completed checks and limitations.
-Initial source snapshot and archived automation details are documented in
-[PUBLICATION.md](PUBLICATION.md).
-The scripts currently expect a workspace with the source folder named
-`moss-prism`; follow the documented layout rather than assuming an arbitrary
-checkout folder will work unchanged.
+## ソースとビルド
 
-Windows builds use Qt 6.11.1; Microsoft PKCE integration requires Qt 6.8 or newer.
-Building requires development tools, but running a packaged launcher does not
-require Python. Minecraft and game Java are not bundled. Keep the whole runtime
-folder together: an EXE alone will not include its required DLLs.
+元にしたソースはPrism Launcher 11.1.1のコミット
+`7d2d3c1ec6fcf8255ebacd02d9f792688575dfb4`です。
 
-## Licenses and attribution
+- [Mossでの変更内容](MOSS-CHANGES.md)
+- [Windows向けビルド手順](BUILD-MOSS.md)
+- [実施済みの確認と制限事項](VERIFICATION.txt)
+- [初回ソース公開と自動処理の保存方法](PUBLICATION.md)
 
-Launcher code is **GPL-3.0-only**. Retain [LICENSE](LICENSE),
-[COPYING.md](COPYING.md), library-specific notices, attribution and corresponding
-source when redistributing. Retained upstream logos and related assets have their
-own CC BY-SA 4.0 attribution; they are not the Moss application mark.
-Runtime dependency notices and corresponding sources are described in
-[DEPENDENCY-SOURCES.txt](DEPENDENCY-SOURCES.txt).
+現在のスクリプトは、ソースフォルダ名が`moss-prism`である作業環境を前提にしています。
+別のフォルダ名で取得した場合もそのまま動くとは限らないため、ビルド手順の配置に従ってください。
 
-Thanks to Prism Launcher, MultiMC and their contributors. The original project
-description and acknowledgements are retained in
-[README-UPSTREAM.md](README-UPSTREAM.md). Upstream support and download links
-there are for Prism, not this fork. Report Moss-specific issues to the Moss
-repository, not the Prism project's issue queue.
+Windows版のビルドにはQt 6.11.1を使用しています。
+Microsoft認証で使うPKCEの実装にはQt 6.8以降が必要です。
+ビルドには開発用ツールが必要ですが、配布用にまとめたランチャーの実行にはPythonは不要です。
+Minecraft本体とゲーム用のJavaは同梱していません。
 
-## 日本語での概要
+配布フォルダは丸ごと使用してください。
+EXEだけを取り出すと、必要なDLLなどが不足して起動できません。
 
-Moss LauncherはPrism Launcherを基にした独立した開発中のランチャーです。
-MODやシェーダーを入れやすくすることを目指しています。
-現在はPrism由来の構成管理・MOD管理とMoss向けの変更が中心です。
-構成の安全なFabric/Forge移行、おすすめMODの専用画面などはまだ未実装です。
-Microsoft/Minecraftの認証は承認・実アカウント検証が完了していません。
-公開されたソースと、完成して一般配布できる実行ファイルは別のものです。
+## ライセンスと謝辞
 
-変更日: 2026-10-03
+ランチャーのコードは**GPL-3.0-only**です。
+再配布時は、[ライセンス原文](LICENSE)、[著作権・ライセンス表示](COPYING.md)、
+各ライブラリの表示、謝辞、対応するソースを残してください。
+
+ソース内に残しているPrism由来のロゴと関連素材には、
+CC BY-SA 4.0に基づく別の表示があります。これらはMossのアプリケーションマークではありません。
+実行時の依存ライブラリの表示と対応するソースについては、
+[依存ライブラリのソースに関する案内](DEPENDENCY-SOURCES.txt)を参照してください。
+
+Prism Launcher、MultiMC、および各プロジェクトの貢献者に感謝します。
+元のプロジェクトの説明と謝辞は、[Prism本家の資料](README-UPSTREAM.md)に保存しています。
+その資料内のサポート先やダウンロード先はPrismのものであり、Mossのものではありません。
+Moss固有の不具合はMossのリポジトリへ報告し、Prism本家の報告先には送らないでください。
+
+変更日：2026-10-03
