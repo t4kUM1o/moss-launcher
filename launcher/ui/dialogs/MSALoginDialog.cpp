@@ -45,6 +45,9 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QColor>
+#include <QComboBox>
+#include <QHBoxLayout>
+#include <QLabel>
 #include <QPainter>
 #include <QPixmap>
 #include <QSize>
@@ -56,6 +59,22 @@
 MSALoginDialog::MSALoginDialog(QWidget* parent) : QDialog(parent), ui(new Ui::MSALoginDialog)
 {
     ui->setupUi(this);
+
+    auto methodRow = new QHBoxLayout;
+    methodRow->addWidget(new QLabel(tr("ログイン方式"), this));
+    m_method = new QComboBox(this);
+    m_method->addItem(tr("ブラウザでログイン（推奨）"));
+    m_method->addItem(tr("コード入力でログイン"));
+    methodRow->addWidget(m_method, 1);
+    ui->verticalLayout_6->insertLayout(0, methodRow);
+    ui->line_3->hide();
+    ui->line_4->hide();
+    ui->orLabel->hide();
+    m_retry = ui->buttonBox->addButton(tr("再試行"), QDialogButtonBox::ActionRole);
+    m_retry->setEnabled(false);
+    connect(m_retry, &QPushButton::clicked, this, &MSALoginDialog::startLogin);
+    connect(m_method, &QComboBox::currentIndexChanged, this, [this] { startLogin(); });
+    connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
     // make font monospace
     QFont font;
@@ -79,62 +98,93 @@ MSALoginDialog::MSALoginDialog(QWidget* parent) : QDialog(parent), ui(new Ui::MS
 
 int MSALoginDialog::exec()
 {
-    // Setup the login task and start it
-    m_account = MinecraftAccount::createBlankMSA();
-    m_authflow_task = m_account->login(false);
-    connect(m_authflow_task.get(), &Task::failed, this, &MSALoginDialog::onTaskFailed);
-    connect(m_authflow_task.get(), &Task::succeeded, this, &QDialog::accept);
-    connect(m_authflow_task.get(), &Task::aborted, this, &MSALoginDialog::reject);
-    connect(m_authflow_task.get(), &Task::status, this, &MSALoginDialog::onAuthFlowStatus);
-    connect(m_authflow_task.get(), &AuthFlow::authorizeWithBrowser, this, &MSALoginDialog::authorizeWithBrowser);
-    connect(m_authflow_task.get(), &AuthFlow::authorizeWithBrowserWithExtra, this, &MSALoginDialog::authorizeWithBrowserWithExtra);
-    connect(ui->buttonBox->button(QDialogButtonBox::Cancel), &QPushButton::clicked, m_authflow_task.get(), &Task::abort);
-
-    m_devicecode_task.reset(new AuthFlow(m_account->accountData(), AuthFlow::Action::DeviceCode));
-    connect(m_devicecode_task.get(), &Task::failed, this, &MSALoginDialog::onTaskFailed);
-    connect(m_devicecode_task.get(), &Task::succeeded, this, &QDialog::accept);
-    connect(m_devicecode_task.get(), &Task::aborted, this, &MSALoginDialog::reject);
-    connect(m_devicecode_task.get(), &Task::status, this, &MSALoginDialog::onDeviceFlowStatus);
-    connect(m_devicecode_task.get(), &AuthFlow::authorizeWithBrowser, this, &MSALoginDialog::authorizeWithBrowser);
-    connect(m_devicecode_task.get(), &AuthFlow::authorizeWithBrowserWithExtra, this, &MSALoginDialog::authorizeWithBrowserWithExtra);
-    connect(ui->buttonBox->button(QDialogButtonBox::Cancel), &QPushButton::clicked, m_devicecode_task.get(), &Task::abort);
-    QMetaObject::invokeMethod(m_authflow_task.get(), &Task::start, Qt::QueuedConnection);
-    QMetaObject::invokeMethod(m_devicecode_task.get(), &Task::start, Qt::QueuedConnection);
-
+    startLogin();
     return QDialog::exec();
+}
+
+void MSALoginDialog::stopLogin()
+{
+    // Keep the old account's raw AccountData alive until its deferred task disposal.
+    if (auto task = m_attempt.task()) {
+        const auto account = m_account;
+        connect(task, &QObject::destroyed, this, [account] {});
+    }
+    m_attempt.cancel();
+}
+
+void MSALoginDialog::startLogin()
+{
+    stopLogin();
+    m_url = QUrl();
+    ui->loginButton->setToolTip(QString());
+    ui->loginButton->setEnabled(false);
+    ui->code->clear();
+    ui->qr->clear();
+    ui->qrMessage->clear();
+    m_retry->setEnabled(false);
+    m_deviceMode = m_method->currentIndex() == 1;
+    ui->stackedWidget2->setVisible(!m_deviceMode);
+    ui->stackedWidget->setVisible(m_deviceMode);
+    ui->stackedWidget2->setCurrentIndex(0);
+    ui->stackedWidget->setCurrentIndex(0);
+    ui->loadingLabel2->setText(tr("ブラウザ方式でログイン"));
+    ui->loadingLabel->setText(tr("コード入力方式でログイン"));
+    ui->status2->setText(tr("ログインを準備しています…"));
+    ui->status->setText(tr("ログインを準備しています…"));
+    m_account = MinecraftAccount::createBlankMSA();
+    const auto flow = m_account->login(m_deviceMode);
+    const auto generation = m_attempt.replace(flow);
+    connect(flow.get(), &Task::failed, &m_attempt, [this, generation](const QString& reason) {
+        if (m_attempt.isCurrent(generation))
+            onTaskFailed(reason);
+    });
+    connect(flow.get(), &Task::succeeded, &m_attempt, [this, generation] {
+        if (m_attempt.isCurrent(generation))
+            accept();
+    });
+    connect(flow.get(), &Task::status, &m_attempt, [this, generation](const QString& status) {
+        if (!m_attempt.isCurrent(generation))
+            return;
+        if (m_deviceMode)
+            onDeviceFlowStatus(status);
+        else
+            onAuthFlowStatus(status);
+    });
+    connect(flow.get(), &AuthFlow::authorizeWithBrowser, &m_attempt, [this, generation](const QUrl& url) {
+        if (m_attempt.isCurrent(generation))
+            authorizeWithBrowser(url);
+    });
+    connect(flow.get(), &AuthFlow::authorizeWithBrowserWithExtra, &m_attempt,
+            [this, generation](const QString& url, const QString& code, int expiresIn) {
+                if (m_attempt.isCurrent(generation))
+                    authorizeWithBrowserWithExtra(url, code, expiresIn);
+            });
+}
+
+void MSALoginDialog::done(int result)
+{
+    stopLogin();
+    QDialog::done(result);
 }
 
 MSALoginDialog::~MSALoginDialog()
 {
+    stopLogin();
     delete ui;
 }
 
 void MSALoginDialog::onTaskFailed(QString reason)
 {
-    // Set message
-    m_authflow_task->disconnect();
-    m_devicecode_task->disconnect();
-    ui->stackedWidget->setCurrentIndex(0);
-    auto lines = reason.split('\n');
-    QString processed;
-    for (auto line : lines) {
-        if (line.size()) {
-            processed += "<font color='red'>" + line + "</font><br />";
-        } else {
-            processed += "<br />";
-        }
-    }
-    ui->status->setText(processed);
-    auto task = m_authflow_task;
-    if (task->failReason().isEmpty()) {
-        task = m_devicecode_task;
-    }
-    if (task) {
-        ui->loadingLabel->setText(task->getStatus());
-    }
-    disconnect(ui->buttonBox->button(QDialogButtonBox::Cancel), &QPushButton::clicked, m_authflow_task.get(), &Task::abort);
-    disconnect(ui->buttonBox->button(QDialogButtonBox::Cancel), &QPushButton::clicked, m_devicecode_task.get(), &Task::abort);
-    connect(ui->buttonBox->button(QDialogButtonBox::Cancel), &QPushButton::clicked, this, &MSALoginDialog::reject);
+    auto pane = m_deviceMode ? ui->stackedWidget : ui->stackedWidget2;
+    auto title = m_deviceMode ? ui->loadingLabel : ui->loadingLabel2;
+    auto details = m_deviceMode ? ui->status : ui->status2;
+    pane->setCurrentIndex(0);
+    title->setText(tr("ログインに失敗しました"));
+    details->setText("<font color='red'>" + reason.toHtmlEscaped().replace('\n', "<br />") + "</font>");
+    m_retry->setEnabled(true);
+    m_url = QUrl();
+    ui->loginButton->setEnabled(false);
+    ui->loginButton->setToolTip(QString());
 }
 
 void MSALoginDialog::authorizeWithBrowser(const QUrl& url)
@@ -145,13 +195,14 @@ void MSALoginDialog::authorizeWithBrowser(const QUrl& url)
     this->adjustSize();
     ui->loginButton->setToolTip(QString("<div style='width: 200px;'>%1</div>").arg(url.toString()));
     m_url = url;
+    ui->loginButton->setEnabled(true);
 }
 
 void paintQR(QPainter& painter, const QSize canvasSize, const QString& data, QColor fg)
 {
     const auto* qr = QRcode_encodeString(data.toUtf8().constData(), 0, QRecLevel::QR_ECLEVEL_M, QRencodeMode::QR_MODE_8, 1);
     if (!qr) {
-        qWarning() << "Unable to encode" << data << "as QR code";
+        qWarning() << "Unable to encode login QR code"; // Never log a login URL or one-time code.
         return;
     }
 

@@ -1,16 +1,56 @@
-Moss Launcher (Prism-based) / verification completed 2026-10-03
+Moss Launcher (Prism-based) / verification completed 2026-10-05
+
+2026-10-05 update: required-MOD consent
+- Windows x64 Release build completed. CTest: all 26 test executables passed,
+  0 failed (1.27 seconds). Moss fork static invariants: 11 tests passed.
+  Offscreen tests ran as the normal Windows user, without administrator access,
+  UAC prompts, network requests, or real account/instance data.
+- MossDependencyReview exercises the dependency question, per-MOD checkboxes,
+  automatic-dependency-only toggle, warning with safe default, explicit proceed,
+  back/cancel, disabled/incomplete lookup, unknown parent edge, non-MOD reviews,
+  and wrapped-label geometry. Japanese offscreen rendering was inspected.
+- Dependencies are looked up before downloads and reviewed after clicking the
+  download dialog's confirmation button. Only provider-declared REQUIRED MODs
+  are included; optional MODs are not silently added. Lookup warnings remain
+  visible and no longer imply that every prerequisite was successfully found.
+- This uses the existing upstream resolver and installed-MOD heuristics, not a
+  complete version-constraint/conflict solver. Existing project metadata or
+  filename matches do not guarantee compatible, enabled prerequisites.
+- ReviewMessageBox and both its download/update callers were explicitly rebuilt
+  after changing the shared generated UI layout, avoiding stale cached objects.
+- Installed in outputs/MossPrism-Windows-11.1.1-mod-dependencies. Existing releases
+  and their data are retained. Public ZIP packaging excludes all real UserData.
+- No live provider download, real MOD installation, Minecraft startup, Microsoft
+  login, or Minecraft API approval was verified by this update.
+
+Previous verification record (2026-10-03)
 
 Built from Prism Launcher 11.1.1 (7d2d3c1ec6fcf8255ebacd02d9f792688575dfb4).
 Windows x64 Release EXE and portable runtime installed in a separate directory.
 Old Python Moss and existing Prism data were not imported or modified.
 
 Automated checks
-- CTest: 23 test executables passed, 0 failed (auth-preview run, 1.20 seconds).
+- CTest: 25 test executables passed, 0 failed (loader-help run, 1.16 seconds).
+  These ran in the normal Windows user environment with the offscreen platform,
+  privileged-link tests disabled, and no real account or network requests.
+  The initial sandbox GUI-widget run timed out; the complete normal-user rerun
+  passed. This is not a claim that GUI tests work inside the restricted sandbox.
 - Windows symbolic-link cases: 7 functions skipped by default in FileSystem.
   These upstream tests can repeatedly invoke the administrator helper. They
   were not verified with elevation and were not re-run after the user's request.
   The ordinary file/path and hard-link cases remain in the FileSystem suite.
-- Moss fork static invariants: 7 tests passed.
+- Moss fork static invariants: 10 tests passed.
+- Added MossLoaderHelp offline widget tests: target Minecraft version, loader
+  version meaning, separate MOD compatibility warning, tab-context replacement,
+  plain-text display, missing-version handling, and wrapped-label geometry.
+  A Japanese offscreen preview was rendered and inspected. The actual running
+  launcher dialog has not been visually inspected in this update.
+- Added MossLoginFlow offline tests: only one selected method starts; switching
+  before a queued start cannot start the old method; stale queued failure cannot
+  overwrite the new attempt; cancel invalidates before its signals; close before
+  start performs no request; success is observed once; retry is a fresh attempt;
+  device/API error messages do not echo raw server strings or imply expiry.
+  These tests use synthetic tasks, not real Microsoft accounts or browser UI.
 - Added offline OAuth tests: loopback-only binding, stable localhost redirect,
   public client ID in the authorization URL, PKCE S256, non-empty state,
   no exposed verifier/client secret, and rejection of a mismatched state.
@@ -23,6 +63,10 @@ Automated checks
   Older objects without dependency records require a clean rebuild if their
   included headers change; this incremental build is not claimed to fix all
   existing cached object dependency records.
+- Auth-fix rebuild explicitly discarded only the build-generated launcher MOC
+  and OAuth test objects to avoid old missing-header-dependency records.
+  Every changed authentication step was recompiled. AuthFlow now records 231
+  dependencies; the rebuilt launcher MOC object records 981 dependencies.
 
 Interactive checks using computer-use, with a separate work/moss-prism-qa
 data directory, NOT the release's UserData and NOT real Prism account data:
@@ -46,10 +90,12 @@ DLL/UAC incident and fix
 Remaining limitations
 - Microsoft client ID supplied by the app owner is embedded in the auth preview:
   191f8f9d-bc7c-4f13-8989-ad109a11bf9a (public identifier, not a secret).
-  Azure redirect configuration and Minecraft API approval are not confirmed.
+  Azure desktop redirect and personal-account audience were confirmed in the
+  user's screenshots; the user also reports allowing public client flows.
+  Minecraft API approval is still not confirmed.
   Authentication setup is described in MICROSOFT-SETUP.txt.
   CurseForge/Imgur still require own credentials. Prism credentials are not copied.
-- The new EXE is installed in outputs/MossPrism-Windows-11.1.1-auth-preview,
+- The 2026-10-03 EXE was installed in outputs/MossPrism-Windows-11.1.1-loader-help,
   leaving the original running release and its UserData unchanged.
 - The browser callback page only acknowledges a Microsoft authorization response;
   it does not claim Minecraft authentication/ownership checks have completed.
@@ -58,6 +104,11 @@ Remaining limitations
   MOD download/update or instance migration was end-to-end verified in this run.
   The implementation is retained from upstream; this is not a claim that every
   inherited feature was tested or that all online services are ready to use.
+- The user's earlier auth-preview attempt reached Xbox authorization, then
+  Minecraft login returned ContentAccessDenied. Its device-code startup returned
+  invalid_client/AADSTS70002. Only sanitized diagnostic metadata was displayed.
+  A two-flow/shared-account dialog bug was found and fixed. No real-account
+  reauthentication was automated, and complete login in auth-fix is unverified.
 - Visual appearance can differ with OS, Qt version, theme and translations.
 
 The release must be kept as a whole directory. Do not redistribute UserData

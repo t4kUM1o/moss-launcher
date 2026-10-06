@@ -54,6 +54,8 @@ void XboxUserStep::perform()
 
 void XboxUserStep::onRequestDone(QByteArray* response)
 {
+    if (m_cancelled)
+        return;
     if (m_request->error() != QNetworkReply::NoError) {
         qWarning() << "Reply error:" << m_request->error();
         if (Net::isApplicationError(m_request->error()) && !Net::isServerError(m_request->error())) {

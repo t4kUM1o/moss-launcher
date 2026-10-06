@@ -40,12 +40,13 @@
 
 #include "Application.h"
 #include "Json.h"
+#include "minecraft/auth/MossAuthMessages.h"
 #include "net/RawHeaderProxy.h"
 
 // https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-device-code
 MSADeviceCodeStep::MSADeviceCodeStep(AccountData* data) : AuthStep(data)
 {
-    m_clientId = APPLICATION->getMSAClientID();
+    m_clientId = APPLICATION->getMSAClientID().trimmed();
     connect(&m_expiration_timer, &QTimer::timeout, this, &MSADeviceCodeStep::abort);
     connect(&m_pool_timer, &QTimer::timeout, this, &MSADeviceCodeStep::authenticateUser);
 }
@@ -57,6 +58,12 @@ QString MSADeviceCodeStep::describe()
 
 void MSADeviceCodeStep::perform()
 {
+    if (m_is_aborted)
+        return;
+    if (m_clientId.isEmpty()) {
+        emit finished(AccountTaskState::STATE_FAILED_HARD, tr("MicrosoftのクライアントIDが未設定です。設定のサービス欄を確認してください。"));
+        return;
+    }
     QUrlQuery data;
     data.addQueryItem("client_id", m_clientId);
     data.addQueryItem("scope", "XboxLive.SignIn XboxLive.offline_access");
@@ -69,7 +76,7 @@ void MSADeviceCodeStep::perform()
     auto [request, response] = Net::Upload::makeByteArray(url, payload);
     m_request = request;
     m_request->addHeaderProxy(std::make_unique<Net::RawHeaderProxy>(headers));
-    m_request->enableAutoRetry(true);
+    m_request->enableAutoRetry(false);
 
     m_task.reset(new NetJob("MSADeviceCodeStep", APPLICATION->network()));
     m_task->setAskRetry(false);
@@ -113,9 +120,11 @@ DeviceAuthorizationResponse parseDeviceAuthorizationResponse(const QByteArray& d
 
 void MSADeviceCodeStep::deviceAuthorizationFinished(QByteArray* response)
 {
+    if (m_is_aborted)
+        return;
     if (!m_request->wasSuccessful() || m_request->error() != QNetworkReply::NoError) {
         qWarning() << "Device authorization failed:" << m_request->error() << m_request->errorString();
-        emit finished(AccountTaskState::STATE_FAILED_HARD, tr("Device authorization failed: %1").arg(m_request->errorString()));
+        emit finished(AccountTaskState::STATE_FAILED_HARD, MossAuthMessages::deviceFailure(*response, m_request->error()));
         return;
     }
 
@@ -147,13 +156,13 @@ void MSADeviceCodeStep::deviceAuthorizationFinished(QByteArray* response)
 
 void MSADeviceCodeStep::abort()
 {
+    AuthStep::abort();
+    m_is_aborted = true;
     m_expiration_timer.stop();
     m_pool_timer.stop();
     if (m_request) {
         m_request->abort();
     }
-    m_is_aborted = true;
-    emit finished(AccountTaskState::STATE_FAILED_HARD, tr("Task aborted"));
 }
 
 void MSADeviceCodeStep::startPoolTimer()
@@ -172,6 +181,8 @@ void MSADeviceCodeStep::startPoolTimer()
 
 void MSADeviceCodeStep::authenticateUser()
 {
+    if (m_is_aborted)
+        return;
     QUrlQuery data;
     data.addQueryItem("client_id", m_clientId);
     data.addQueryItem("grant_type", "urn:ietf:params:oauth:grant-type:device_code");
@@ -229,6 +240,8 @@ AuthenticationResponse parseAuthenticationResponse(const QByteArray& data)
 
 void MSADeviceCodeStep::authenticationFinished(QByteArray* response)
 {
+    if (m_is_aborted)
+        return;
     if (m_request->error() == QNetworkReply::TimeoutError) {
         // rfc8628#section-3.5
         // "On encountering a connection timeout, clients MUST unilaterally

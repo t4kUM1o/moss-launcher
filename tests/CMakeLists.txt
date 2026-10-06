@@ -1,6 +1,15 @@
 # Moss fork modification, 2026-10-02: add environment-discovery regression tests.
 project(tests)
 
+ecm_add_test(MossDependencyReview_test.cpp LINK_LIBRARIES Launcher_logic Qt${QT_VERSION_MAJOR}::Test
+    TEST_NAME MossDependencyReview)
+
+ecm_add_test(MossLoaderHelp_test.cpp LINK_LIBRARIES Launcher_logic Qt${QT_VERSION_MAJOR}::Test
+    TEST_NAME MossLoaderHelp)
+
+ecm_add_test(MossLoginFlow_test.cpp LINK_LIBRARIES Launcher_logic Qt${QT_VERSION_MAJOR}::Test
+    TEST_NAME MossLoginFlow)
+
 ecm_add_test(MossOAuth_test.cpp LINK_LIBRARIES Launcher_logic Qt${QT_VERSION_MAJOR}::Test
     TEST_NAME MossOAuth)
 

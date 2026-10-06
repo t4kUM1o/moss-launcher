@@ -2,7 +2,7 @@
 
 Independent modified build based on Prism Launcher **11.1.1**, upstream commit
 `7d2d3c1ec6fcf8255ebacd02d9f792688575dfb4`.
-Changes made on **2026-10-02 / 2026-10-03**. This fork is not Prism Launcher and is not
+Changes made on **2026-10-02 / 2026-10-03 / 2026-10-05**. This fork is not Prism Launcher and is not
 endorsed by or affiliated with the Prism Launcher project.
 
 ## Preserved implementation
@@ -15,6 +15,28 @@ Authentication and provider authorization are not bypassed.
 
 ## Fork changes
 
+- Make required-MOD consent explicit in the download review: Japanese guidance,
+  selected/required roles, expanded required-by information, a toggle limited to
+  automatically discovered dependencies, and a safe-default warning before
+  proceeding without a required candidate. Preserve the inherited resolver's
+  game/loader filters and REQUIRED-only policy. Keep uncertain installed matches
+  deselected; explain disabled/incomplete lookup and report missing candidates.
+  Cancellation during lookup returns to the original selection. Add offline
+  consent and layout tests; no real MOD files or instance data are changed by tests.
+- Add Japanese loader-install guidance showing the instance's Minecraft version,
+  the selected loader's name, the meaning of loader version numbers, and the
+  separate MOD compatibility requirement. Update on loader-tab changes without
+  changing the inherited version filter; explain shared loader candidates in a
+  tooltip. Add offline widget tests and a static wiring regression check.
+- Auth-fix build: select browser login (default) or device-code login instead of
+  running two flows against one account. Cancel before switching, create a fresh
+  account per attempt, reject stale queued signals, close the loopback listener,
+  and ignore cancelled callbacks at every downstream step. Add a Retry button.
+- Replace the misleading universal session-expired failure text; escape error
+  details as HTML and provide Japanese device-flow/API-access-denied guidance.
+  The loopback acknowledgement is now Japanese and still does not claim success.
+  Remove the Minecraft-login raw response logger and do not automatically retry
+  device-code startup or Minecraft login rejection. API permissions are not bypassed.
 - Moss-first project README, retained upstream acknowledgements, source-publication
   notes and additional runtime/credential ignore rules. The first public source
   snapshot archives upstream GitHub automation outside active `.github` paths

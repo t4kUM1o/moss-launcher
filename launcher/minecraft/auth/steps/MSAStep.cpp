@@ -137,3 +137,13 @@ void MSAStep::perform()
         m_oauth2.grant();
     }
 }
+
+void MSAStep::abort()
+{
+    AuthStep::abort();
+    // Detach OAuth callbacks immediately; deferred QObject deletion is not enough.
+    disconnect(&m_oauth2, nullptr, this, nullptr);
+    auto handler = static_cast<MossOAuthReplyHandler*>(m_oauth2.replyHandler());
+    handler->close();
+    disconnect(handler, nullptr, &m_oauth2, nullptr);
+}

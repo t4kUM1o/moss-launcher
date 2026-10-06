@@ -26,11 +26,15 @@ class ReviewMessageBox : public QDialog {
     auto deselectedResources() -> QStringList;
 
     void retranslateUi(QString resources_name);
+    // Moss: explicit consent for automatically discovered required MODs.
+    void configureModDependencies(const QStringList& dependencyNames, bool checkEnabled, bool lookupComplete = true);
+    QStringList missingRequiredMods() const;
 
     ~ReviewMessageBox() override;
 
    protected slots:
     void on_toggleDepsButton_clicked();
+    void confirmSelection();
 
    protected:
     ReviewMessageBox(QWidget* parent, const QString& title, const QString& icon);

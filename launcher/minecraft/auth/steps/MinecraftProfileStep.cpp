@@ -37,6 +37,8 @@ void MinecraftProfileStep::perform()
 
 void MinecraftProfileStep::onRequestDone(QByteArray* response)
 {
+    if (m_cancelled)
+        return;
     if (m_request->error() == QNetworkReply::ContentNotFoundError) {
         // NOTE: Succeed even if we do not have a profile. This is a valid account state.
         m_data->minecraftProfile = MinecraftProfile();

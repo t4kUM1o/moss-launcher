@@ -124,7 +124,7 @@ bool AuthFlow::changeState(AccountTaskState newState, QString reason)
             return false;
         }
         case AccountTaskState::STATE_FAILED_HARD: {
-            setStatus(tr("Failed to authenticate. The session has expired."));
+            setStatus(tr("認証に失敗しました。表示された理由を確認してください。"));
             m_data->errorString = reason;
             m_data->accountState = AccountState::Expired;
             emitFailed(reason);
@@ -148,6 +148,10 @@ bool AuthFlow::changeState(AccountTaskState newState, QString reason)
 }
 bool AuthFlow::abort()
 {
+    if (!Task::isRunning())
+        return true;
+    if (m_currentStep)
+        disconnect(m_currentStep.get(), nullptr, this, nullptr);
     if (m_currentStep)
         m_currentStep->abort();
     emitAborted();

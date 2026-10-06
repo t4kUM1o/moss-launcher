@@ -47,6 +47,8 @@ void EntitlementsStep::perform()
 
 void EntitlementsStep::onRequestDone(QByteArray* response)
 {
+    if (m_cancelled)
+        return;
     qCDebug(authCredentials()) << *response;
 
     // TODO: check presence of same entitlementsRequestId?

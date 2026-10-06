@@ -13,8 +13,9 @@ class MossOAuthReplyHandler final : public QOAuthHttpServerReplyHandler {
     {
         setCallbackPath("/oauth/microsoft");
         // A received Microsoft response is not proof of Minecraft ownership.
-        setCallbackText(tr("Microsoft authorization response received. Return to Moss Launcher to complete account verification. "
-                           "You can close this browser tab."));
+        setCallbackText(tr("Microsoftからの応答を受け取りました。Moss Launcherへ戻って認証結果を確認してください。"
+                           "Minecraftの認証やゲームの所有確認は、この時点では完了していません。"
+                           "このブラウザタブは閉じてかまいません。"));
     }
 
     QString callback() const override

@@ -62,6 +62,45 @@ class ForkChecks(unittest.TestCase):
         self.assertIn("Corresponding Source", notes)
         self.assertIn("7d2d3c1ec6fcf8255ebacd02d9f792688575dfb4", notes)
 
+    def test_login_methods_are_selected_not_started_together(self):
+        code = (SOURCE / "launcher/ui/dialogs/MSALoginDialog.cpp").read_text(encoding="utf-8")
+        header = (SOURCE / "launcher/ui/dialogs/MSALoginDialog.h").read_text(encoding="utf-8")
+        self.assertNotIn("m_devicecode_task", code + header)
+        self.assertIn("m_account->login(m_deviceMode)", code)
+        self.assertIn("m_attempt.isCurrent(generation)", code)
+        self.assertIn("reason.toHtmlEscaped()", code)
+        self.assertIn("void MSALoginDialog::done(int result)", code)
+        flow = (SOURCE / "launcher/minecraft/auth/AuthFlow.cpp").read_text(encoding="utf-8")
+        self.assertNotIn("The session has expired", flow)
+
+    def test_cancelled_callbacks_do_not_modify_old_accounts(self):
+        for step in ("XboxUserStep", "XboxAuthorizationStep", "LauncherLoginStep", "EntitlementsStep", "MinecraftProfileStep", "GetSkinStep"):
+            code = (SOURCE / f"launcher/minecraft/auth/steps/{step}.cpp").read_text(encoding="utf-8")
+            self.assertRegex(code, rf"void {step}::onRequestDone\(QByteArray\* response\)\s*\{{\s*if \(m_cancelled\)\s*return;")
+
+    def test_loader_help_updates_without_changing_filter(self):
+        code = (SOURCE / "launcher/ui/dialogs/InstallLoaderDialog.cpp").read_text(encoding="utf-8")
+        self.assertIn('setExactIfPresentFilter(BaseVersionList::ParentVersionRole, minecraftVersion)', code)
+        self.assertIn('loaderHelp->setContext(this->profile->getComponentVersion("net.minecraft"), current->displayName())', code)
+        self.assertIn('loaderHelp->setContext(profile->getComponentVersion("net.minecraft"), container->selectedPage()->displayName())', code)
+        self.assertLess(code.index('layout->addWidget(loaderHelp)'), code.index('layout->addWidget(container)'))
+        help_code = (SOURCE / "launcher/ui/widgets/MossLoaderHelp.h").read_text(encoding="utf-8")
+        self.assertIn('Qt::PlainText', help_code)
+        self.assertIn('MODの互換性は保証されません', help_code)
+
+    def test_required_dependencies_need_review_consent(self):
+        download = (SOURCE / "launcher/ui/dialogs/ResourceDownloadDialog.cpp").read_text(encoding="utf-8")
+        self.assertIn("configureModDependencies(depNames", download)
+        self.assertIn('get("ModDependenciesDisabled")', download)
+        self.assertLess(download.index("configureModDependencies(depNames"), download.index("confirmDialog->exec()"))
+        review = (SOURCE / "launcher/ui/dialogs/ReviewMessageBox.cpp").read_text(encoding="utf-8")
+        self.assertIn("一緒に追加しますか", review)
+        self.assertIn("warning.setDefaultButton(QMessageBox::No)", review)
+        self.assertIn("warning.setTextFormat(Qt::PlainText)", review)
+        deps = (SOURCE / "launcher/minecraft/mod/tasks/GetModDependenciesTask.cpp").read_text(encoding="utf-8")
+        self.assertIn("ver_dep.type != ModPlatform::DependencyType::REQUIRED", deps)
+        self.assertIn("前提MODの対応ファイルが見つかりませんでした", deps)
+
 
 if __name__ == "__main__":
     unittest.main()

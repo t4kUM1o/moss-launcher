@@ -46,6 +46,7 @@ class MSAStep : public AuthStep {
     virtual ~MSAStep() noexcept = default;
 
     void perform() override;
+    void abort() override;
 
     QString describe() override;
 

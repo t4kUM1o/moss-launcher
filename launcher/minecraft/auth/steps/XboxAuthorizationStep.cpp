@@ -57,6 +57,8 @@ void XboxAuthorizationStep::perform()
 
 void XboxAuthorizationStep::onRequestDone(QByteArray* response)
 {
+    if (m_cancelled)
+        return;
     qCDebug(authCredentials()) << *response;
     if (m_request->error() != QNetworkReply::NoError) {
         qWarning() << "Reply error:" << m_request->error();

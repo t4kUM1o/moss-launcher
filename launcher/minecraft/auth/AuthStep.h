@@ -33,11 +33,12 @@ class AuthStep : public QObject {
 
    public slots:
     virtual void perform() = 0;
-    virtual void abort() {}
+    virtual void abort() { m_cancelled = true; }
 
    signals:
     void finished(AccountTaskState resultingState, QString message);
 
    protected:
     AccountData* m_data;
+    bool m_cancelled = false;
 };

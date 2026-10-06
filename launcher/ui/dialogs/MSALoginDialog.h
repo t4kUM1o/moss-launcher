@@ -20,6 +20,10 @@
 
 #include "minecraft/auth/AuthFlow.h"
 #include "minecraft/auth/MinecraftAccount.h"
+#include "minecraft/auth/MossLoginAttempt.h"
+
+class QComboBox;
+class QPushButton;
 
 namespace Ui {
 class MSALoginDialog;
@@ -33,9 +37,12 @@ class MSALoginDialog : public QDialog {
 
     static MinecraftAccountPtr newAccount(QWidget* parent);
     int exec() override;
+    void done(int result) override;
 
    private:
     explicit MSALoginDialog(QWidget* parent = 0);
+    void startLogin();
+    void stopLogin();
 
    protected slots:
     void onTaskFailed(QString reason);
@@ -47,8 +54,10 @@ class MSALoginDialog : public QDialog {
    private:
     Ui::MSALoginDialog* ui;
     MinecraftAccountPtr m_account;
-    shared_qobject_ptr<AuthFlow> m_devicecode_task;
-    shared_qobject_ptr<AuthFlow> m_authflow_task;
+    MossLoginAttempt m_attempt;
+    QComboBox* m_method = nullptr;
+    QPushButton* m_retry = nullptr;
+    bool m_deviceMode = false;
 
     QUrl m_url;
 };

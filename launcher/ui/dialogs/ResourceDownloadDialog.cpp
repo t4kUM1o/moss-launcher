@@ -153,11 +153,12 @@ void ResourceDownloadDialog::connectButtons()
 
 void ResourceDownloadDialog::confirm()
 {
-    auto* confirmDialog = ReviewMessageBox::create(this, tr("Confirm %1 to download").arg(resourcesString()));
+    auto confirmDialog = std::unique_ptr<ReviewMessageBox>(ReviewMessageBox::create(this, tr("Confirm %1 to download").arg(resourcesString())));
     confirmDialog->retranslateUi(resourcesString());
 
     QHash<QString, GetModDependenciesTask::PackDependencyExtraInfo> dependencyExtraInfo;
     QStringList depNames;
+    bool dependencyLookupComplete = true;
     if (auto task = getModDependenciesTask(); task) {
         connect(task.get(), &Task::failed, this,
                 [this](const QString& reason) { CustomMessageBox::selectable(this, tr("Error"), reason, QMessageBox::Critical)->exec(); });
@@ -181,7 +182,7 @@ void ResourceDownloadDialog::confirm()
 
         // If the dialog was skipped / some download error happened
         if (ret == QDialog::DialogCode::Rejected) {
-            QMetaObject::invokeMethod(this, "reject", Qt::QueuedConnection);
+            // Keep the user's selection intact when dependency lookup is cancelled.
             return;
         }
         for (const auto& dep : task->getDependecies()) {
@@ -189,6 +190,12 @@ void ResourceDownloadDialog::confirm()
             depNames << dep->pack->name;
         }
         dependencyExtraInfo = task->getExtraInfo();
+        dependencyLookupComplete = task->warnings().isEmpty();
+    }
+
+    if (dynamic_cast<ModFolderModel*>(getBaseModel())) {
+        confirmDialog->configureModDependencies(depNames, !APPLICATION->settings()->get("ModDependenciesDisabled").toBool(),
+                                               dependencyLookupComplete);
     }
 
     auto selected = getTasks();

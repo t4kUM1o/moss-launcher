@@ -53,6 +53,7 @@ ResourceUpdateDialog::ResourceUpdateDialog(QWidget* parent,
 {
     ReviewMessageBox::setGeometry(0, 0, 800, 600);
 
+    // Moss 2026-10-05: the shared review hint now sits above the action row.
     ui->explainLabel->setText(tr("You're about to update the following resources:"));
     ui->onlyCheckedLabel->setText(tr("Only resources with a check will be updated!"));
 }

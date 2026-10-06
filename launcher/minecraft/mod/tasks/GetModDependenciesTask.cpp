@@ -144,6 +144,7 @@ Task::Ptr GetModDependenciesTask::getProjectInfoTask(std::shared_ptr<PackDepende
         QJsonParseError parse_error{};
         QJsonDocument doc = QJsonDocument::fromJson(*responseInfo, &parse_error);
         if (parse_error.error != QJsonParseError::NoError) {
+            logWarning(QStringLiteral("前提MODのプロジェクト情報を読み取れませんでした：%1").arg(pDep->pack->addonId.toString()));
             removePack(pDep->pack->addonId);
             qWarning() << "Error while parsing JSON response for mod info at" << parse_error.offset
                        << "reason:" << parse_error.errorString();
@@ -156,6 +157,7 @@ Task::Ptr GetModDependenciesTask::getProjectInfoTask(std::shared_ptr<PackDepende
 
             getAPI(provider)->loadIndexedPack(*pDep->pack, obj);
         } catch (const JSONValidationError& e) {
+            logWarning(QStringLiteral("前提MODのプロジェクト情報が不正です：%1").arg(pDep->pack->addonId.toString()));
             removePack(pDep->pack->addonId);
             qDebug() << doc;
             qWarning() << "Error while reading mod info:" << e.cause();
@@ -205,6 +207,8 @@ Task::Ptr GetModDependenciesTask::prepareDependencyTask(const ModPlatform::Depen
                     return;
                 }
             }
+            logWarning(QStringLiteral("前提MODの対応ファイルが見つかりませんでした（Minecraft %1）：%2")
+                           .arg(m_version.toString(), dep.addonId.toString().isEmpty() ? dep.version : dep.addonId.toString()));
             removePack(dep.addonId);
             return;
         }
@@ -213,6 +217,7 @@ Task::Ptr GetModDependenciesTask::prepareDependencyTask(const ModPlatform::Depen
         pDep->pack->versionsLoaded = true;
 
         if (level == 0) {
+            logWarning(QStringLiteral("前提MODの依存関係が深すぎるため、確認を完了できませんでした。"));
             removePack(dep.addonId);
             qWarning() << "Dependency cycle exceeded";
             return;

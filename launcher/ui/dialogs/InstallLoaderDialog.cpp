@@ -29,6 +29,7 @@
 #include "minecraft/PackProfile.h"
 #include "ui/widgets/PageContainer.h"
 #include "ui/widgets/VersionSelectWidget.h"
+#include "ui/widgets/MossLoaderHelp.h"
 
 class InstallLoaderPage : public VersionSelectWidget, public BasePage {
     Q_OBJECT
@@ -88,6 +89,8 @@ InstallLoaderDialog::InstallLoaderDialog(PackProfile* profile, const QString& ui
     : QDialog(parent), profile(profile), container(new PageContainer(this, QString(), this)), buttons(new QDialogButtonBox(this))
 {
     auto layout = new QVBoxLayout(this);
+    auto* loaderHelp = new MossLoaderHelp(this);
+    layout->addWidget(loaderHelp);
     // small margins look ugly on macOS on modal windows
     #ifndef Q_OS_MACOS
     layout->setContentsMargins(0, 0, 0, 0);
@@ -116,7 +119,7 @@ InstallLoaderDialog::InstallLoaderDialog(PackProfile* profile, const QString& ui
 
     setWindowTitle(dialogTitle());
     setWindowModality(Qt::WindowModal);
-    resize(520, 347);
+    resize(620, 480);
 
     for (BasePage* page : container->getPages()) {
         if (page->id() == uid)
@@ -127,7 +130,11 @@ InstallLoaderDialog::InstallLoaderDialog(PackProfile* profile, const QString& ui
                 validate(container->selectedPage());
         });
     }
-    connect(container, &PageContainer::selectedPageChanged, this, [this](BasePage* previous, BasePage* current) { validate(current); });
+    connect(container, &PageContainer::selectedPageChanged, this, [this, loaderHelp](BasePage*, BasePage* current) {
+        loaderHelp->setContext(this->profile->getComponentVersion("net.minecraft"), current->displayName());
+        validate(current);
+    });
+    loaderHelp->setContext(profile->getComponentVersion("net.minecraft"), container->selectedPage()->displayName());
     pageCast(container->selectedPage())->selectSearch();
     validate(container->selectedPage());
 }
